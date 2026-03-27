@@ -24,3 +24,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "FaceChanger"
 include(":app")
+include(":core:model")
+include(":core:ui")
+include(":core:camera")
+include(":core:ml")
+include(":feature:faceswap")
