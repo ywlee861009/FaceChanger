@@ -24,17 +24,20 @@ internal object FaceSwapReducer {
         val bitmap = result.frameBitmap
         var personCrop: Bitmap? = null
         var dogCrop: Bitmap? = null
+        var dogFaceBox = result.dogBox
 
         val face = result.personFace
         val dog = result.dogBox
         if (bitmap != null && face != null && dog != null) {
             personCrop = cropNormalized(bitmap, face.boundingBox)
-            dogCrop = cropPixel(bitmap, dog.rect)
+            val faceRect = estimateDogFaceRect(dog.rect)
+            dogCrop = cropPixel(bitmap, faceRect)
+            dogFaceBox = dog.copy(rect = faceRect)
         }
 
         return currentState.copy(
             personFace = result.personFace,
-            dogBoundingBox = result.dogBox,
+            dogBoundingBox = dogFaceBox,
             guideMessage = guide,
             isSwapEnabled = guide == GuideMessage.Ready,
             personCrop = personCrop,
@@ -55,6 +58,18 @@ internal object FaceSwapReducer {
         val cropH = bottom - top
         if (cropW <= 0 || cropH <= 0) return null
         return Bitmap.createBitmap(bitmap, left, top, cropW, cropH)
+    }
+
+    private fun estimateDogFaceRect(bodyRect: RectF): RectF {
+        val bodyH = bodyRect.bottom - bodyRect.top
+        val bodyW = bodyRect.right - bodyRect.left
+        // 강아지 얼굴 ≈ 몸 바운딩박스의 상단 45%, 좌우 10% 안쪽
+        return RectF(
+            bodyRect.left + bodyW * 0.1f,
+            bodyRect.top,
+            bodyRect.right - bodyW * 0.1f,
+            bodyRect.top + bodyH * 0.45f,
+        )
     }
 
     private fun cropPixel(bitmap: Bitmap, pixelRect: RectF): Bitmap? {
