@@ -1,45 +1,68 @@
 package com.kero.face.core.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val FaceChangerColorScheme = lightColorScheme(
+    primary = PeachPink,
+    onPrimary = PureWhite,
+    primaryContainer = SoftCoral,
+    onPrimaryContainer = DarkCocoa,
+    secondary = SkyLavender,
+    onSecondary = PureWhite,
+    secondaryContainer = SkyLavender,
+    onSecondaryContainer = DarkCocoa,
+    tertiary = MintGreen,
+    onTertiary = DarkCocoa,
+    tertiaryContainer = MintGreen,
+    onTertiaryContainer = DarkCocoa,
+    background = LightCream,
+    onBackground = DarkCocoa,
+    surface = PureWhite,
+    onSurface = DarkCocoa,
+    surfaceVariant = WarmCream,
+    onSurfaceVariant = WarmGray,
+    error = ErrorRed,
+    onError = PureWhite,
+    errorContainer = ErrorRedLight,
+    onErrorContainer = ErrorRed,
+    outline = BorderColor,
+    outlineVariant = BorderColor,
 )
 
 @Composable
 fun FaceChangerTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    CompositionLocalProvider(
+        LocalFaceChangerColors provides FaceChangerColors(),
+        LocalFaceChangerSpacing provides FaceChangerSpacing(),
+        LocalFaceChangerShapes provides FaceChangerShapes(),
+    ) {
+        MaterialTheme(
+            colorScheme = FaceChangerColorScheme,
+            typography = Typography,
+            content = content,
+        )
     }
+}
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+object FcTheme {
+    val colors: FaceChangerColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFaceChangerColors.current
+
+    val spacing: FaceChangerSpacing
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFaceChangerSpacing.current
+
+    val shapes: FaceChangerShapes
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFaceChangerShapes.current
 }
