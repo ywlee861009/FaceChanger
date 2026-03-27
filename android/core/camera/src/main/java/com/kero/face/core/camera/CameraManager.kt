@@ -37,6 +37,7 @@ class CameraManager(private val context: Context) {
                         width = imageProxy.width,
                         height = imageProxy.height,
                         timestampMs = System.currentTimeMillis(),
+                        rotationDegrees = imageProxy.imageInfo.rotationDegrees,
                     )
                     frameAnalyzer.analyze(frameData)
                     imageProxy.close()

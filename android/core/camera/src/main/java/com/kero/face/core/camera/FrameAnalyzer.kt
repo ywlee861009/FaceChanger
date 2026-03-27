@@ -7,6 +7,7 @@ data class FrameData(
     val width: Int,
     val height: Int,
     val timestampMs: Long,
+    val rotationDegrees: Int = 0,
 )
 
 fun interface FrameAnalyzer {

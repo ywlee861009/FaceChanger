@@ -13,6 +13,7 @@ interface DetectionEngine {
         width: Int,
         height: Int,
         timestampMs: Long,
+        rotationDegrees: Int = 0,
         onResult: (DetectionResult) -> Unit,
     )
 

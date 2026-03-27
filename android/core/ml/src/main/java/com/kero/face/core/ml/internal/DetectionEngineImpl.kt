@@ -1,11 +1,11 @@
 package com.kero.face.core.ml.internal
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import com.google.mediapipe.framework.image.BitmapImageBuilder
-import com.google.mediapipe.framework.image.MPImage
 import com.kero.face.core.ml.DetectionEngine
 import com.kero.face.core.model.DetectionResult
-import android.graphics.Bitmap
 import java.nio.ByteBuffer
 
 internal class DetectionEngineImpl(private val context: Context) : DetectionEngine {
@@ -23,11 +23,21 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
         width: Int,
         height: Int,
         timestampMs: Long,
+        rotationDegrees: Int,
         onResult: (DetectionResult) -> Unit,
     ) {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val rawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         frameBuffer.rewind()
-        bitmap.copyPixelsFromBuffer(frameBuffer)
+        rawBitmap.copyPixelsFromBuffer(frameBuffer)
+
+        val bitmap = if (rotationDegrees != 0) {
+            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+            Bitmap.createBitmap(rawBitmap, 0, 0, width, height, matrix, true).also {
+                if (it !== rawBitmap) rawBitmap.recycle()
+            }
+        } else {
+            rawBitmap
+        }
 
         val mpImage = BitmapImageBuilder(bitmap).build()
 

@@ -99,14 +99,16 @@ private fun CameraContent(
             lifecycleOwner = lifecycleOwner,
             surfaceProvider = previewView.surfaceProvider,
             frameAnalyzer = { frameData ->
-                imageWidth = frameData.width
-                imageHeight = frameData.height
+                val rotated = frameData.rotationDegrees == 90 || frameData.rotationDegrees == 270
+                imageWidth = if (rotated) frameData.height else frameData.width
+                imageHeight = if (rotated) frameData.width else frameData.height
 
                 detectionEngine.processFrame(
                     frameBuffer = frameData.buffer,
                     width = frameData.width,
                     height = frameData.height,
                     timestampMs = frameData.timestampMs,
+                    rotationDegrees = frameData.rotationDegrees,
                 ) { result ->
                     viewModel.dispatch(FaceSwapIntent.OnFrameAnalyzed(result))
                 }
