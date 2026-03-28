@@ -2,6 +2,7 @@ package com.kero.face
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -9,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,7 +51,20 @@ class MainActivity : ComponentActivity() {
                     screenStack = screenStack.dropLast(1) + screen
                 }
 
-                // 시스템 뒤로가기: Splash/Home은 앱 종료, 나머지는 스택 pop
+                var lastBackPressTime by remember { mutableLongStateOf(0L) }
+
+                // Home 화면에서 뒤로가기 두 번 → 앱 종료
+                BackHandler(enabled = currentScreen == AppScreen.Home) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastBackPressTime < 2000L) {
+                        finish()
+                    } else {
+                        lastBackPressTime = now
+                        Toast.makeText(this@MainActivity, "한 번 더 누르면 종료됩니다", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                // 시스템 뒤로가기: 나머지는 스택 pop
                 BackHandler(enabled = screenStack.size > 1) {
                     pop()
                 }
