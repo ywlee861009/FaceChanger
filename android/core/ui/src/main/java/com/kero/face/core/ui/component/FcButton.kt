@@ -38,24 +38,28 @@ fun FcButton(
     modifier: Modifier = Modifier,
     style: FcButtonStyle = FcButtonStyle.Primary,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     leadingIcon: ImageVector? = null,
 ) {
     val colors = FcTheme.colors
+    val isActuallyEnabled = enabled && !isLoading
 
     when (style) {
         FcButtonStyle.Primary -> {
             Button(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled,
+                enabled = isActuallyEnabled,
                 shape = FcTheme.shapes.button,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.primary,
                     contentColor = colors.onPrimary,
+                    disabledContainerColor = colors.primary,
+                    disabledContentColor = colors.onPrimary,
                 ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
             ) {
-                ButtonContent(text = text, icon = leadingIcon)
+                if (isLoading) LoadingButtonContent() else ButtonContent(text = text, icon = leadingIcon)
             }
         }
 
@@ -63,15 +67,17 @@ fun FcButton(
             Button(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled,
+                enabled = isActuallyEnabled,
                 shape = FcTheme.shapes.button,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.secondary,
                     contentColor = colors.onPrimary,
+                    disabledContainerColor = colors.secondary,
+                    disabledContentColor = colors.onPrimary,
                 ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
             ) {
-                ButtonContent(text = text, icon = leadingIcon)
+                if (isLoading) LoadingButtonContent() else ButtonContent(text = text, icon = leadingIcon)
             }
         }
 
@@ -79,7 +85,7 @@ fun FcButton(
             OutlinedButton(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled,
+                enabled = isActuallyEnabled,
                 shape = FcTheme.shapes.button,
                 border = BorderStroke(1.5.dp, colors.primary),
                 colors = ButtonDefaults.outlinedButtonColors(
@@ -95,7 +101,7 @@ fun FcButton(
             TextButton(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled,
+                enabled = isActuallyEnabled,
                 shape = FcTheme.shapes.button,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = colors.onBackground,
@@ -110,7 +116,7 @@ fun FcButton(
             Button(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled,
+                enabled = isActuallyEnabled,
                 shape = FcTheme.shapes.button,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.error,
@@ -169,6 +175,13 @@ fun FcIconButton(
             modifier = Modifier.size(24.dp),
         )
     }
+}
+
+@Composable
+private fun LoadingButtonContent() {
+    FcLoadingPaw()
+    Spacer(modifier = Modifier.width(8.dp))
+    Text(text = "처리 중...")
 }
 
 @Composable
