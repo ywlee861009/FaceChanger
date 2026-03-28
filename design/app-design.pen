@@ -5453,24 +5453,24 @@
                           "x": 8
                         },
                         "jeywc": {
-                          "x": 50.333333333333336,
+                          "x": 50.33333333333333,
                           "y": 15
                         },
                         "FFVdr": {
-                          "x": 48.333333333333336,
+                          "x": 48.33333333333333,
                           "y": 43
                         },
                         "S6ClV": {
                           "width": "fill_container",
                           "height": "fill_container",
-                          "x": 132.66666666666669
+                          "x": 132.66666666666666
                         },
                         "ouZBy": {
-                          "x": 50.333333333333336,
+                          "x": 50.33333333333333,
                           "y": 15
                         },
                         "W3zvj": {
-                          "x": 48.333333333333336,
+                          "x": 48.33333333333333,
                           "y": 43
                         },
                         "xWCYl": {
@@ -5479,11 +5479,11 @@
                           "x": 257.33333333333337
                         },
                         "oQs28": {
-                          "x": 50.333333333333336,
+                          "x": 50.33333333333333,
                           "y": 15
                         },
                         "yzIBp": {
-                          "x": 52.833333333333336,
+                          "x": 52.83333333333333,
                           "y": 43
                         }
                       }
@@ -9607,8 +9607,8 @@
         },
         {
           "type": "frame",
-          "id": "wRAfE",
-          "name": "content10",
+          "id": "IqgS6",
+          "name": "content10New",
           "width": "fill_container",
           "height": "fill_container",
           "layout": "vertical",
@@ -9616,121 +9616,145 @@
           "padding": [
             20,
             20,
-            0,
+            16,
             20
           ],
           "children": [
             {
               "type": "text",
-              "id": "IiqkI",
+              "id": "jEAug",
+              "name": "subtitle",
               "fill": "$color-warm-gray",
-              "content": "교환할 사진 두 장을 선택해 주세요",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "강아지와 사람이 모두 포함된 사진을 선택해 주세요",
               "fontFamily": "Inter",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             },
             {
               "type": "frame",
-              "id": "iwkiz",
-              "name": "dogCard",
-              "width": "fill_container",
-              "fill": "$color-white",
-              "cornerRadius": 16,
-              "effect": {
-                "type": "shadow",
-                "shadowType": "outer",
-                "color": "#3D2C2E14",
-                "offset": {
-                  "x": 0,
-                  "y": 2
-                },
-                "blur": 8
+              "id": "WDdN4",
+              "name": "photoWrap",
+              "metadata": {
+                "type": "unsplash",
+                "username": "alexavila777",
+                "link": "https://unsplash.com/@alexavila777",
+                "author": "Alex Avila"
               },
-              "layout": "vertical",
+              "clip": true,
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "./images/generated-1774691795439.png",
+                "mode": "fill"
+              },
+              "cornerRadius": 20,
+              "layout": "none",
               "children": [
                 {
+                  "type": "ellipse",
+                  "id": "eSyin",
+                  "x": 134,
+                  "y": 149,
+                  "name": "dogCircle",
+                  "fill": "#9B7FD422",
+                  "width": 94,
+                  "height": 111,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 3,
+                    "fill": "#9B7FD4"
+                  }
+                },
+                {
+                  "type": "ellipse",
+                  "id": "O4hIT",
+                  "x": 202,
+                  "y": 108,
+                  "name": "personCircle",
+                  "fill": "#E8748A22",
+                  "width": 106,
+                  "height": 114,
+                  "stroke": {
+                    "align": "center",
+                    "thickness": 3,
+                    "fill": "#E8748A"
+                  }
+                },
+                {
                   "type": "frame",
-                  "id": "iHndd",
-                  "name": "dogCardHeader",
-                  "width": "fill_container",
-                  "gap": 8,
+                  "id": "hk7SX",
+                  "x": 139,
+                  "y": 121,
+                  "name": "dogBadge",
+                  "fill": "#9B7FD4",
+                  "cornerRadius": 10,
+                  "gap": 4,
                   "padding": [
-                    14,
-                    16
+                    4,
+                    8
                   ],
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "8JPYY",
-                      "name": "dogBadge",
-                      "width": 32,
-                      "height": 32,
-                      "fill": "$color-soft-coral",
-                      "cornerRadius": 16,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "tqapC",
-                          "width": 18,
-                          "height": 18,
-                          "iconFontName": "pets",
-                          "iconFontFamily": "Material Symbols Rounded",
-                          "fill": "$color-white"
-                        }
-                      ]
+                      "type": "icon_font",
+                      "id": "EecO9",
+                      "name": "dogBadgeIcon",
+                      "width": 12,
+                      "height": 12,
+                      "iconFontName": "pets",
+                      "iconFontFamily": "Material Symbols Rounded",
+                      "fill": "#FFFFFF"
                     },
                     {
                       "type": "text",
-                      "id": "FIDHC",
-                      "fill": "$color-dark-cocoa",
-                      "content": "강아지 사진",
+                      "id": "FZmjg",
+                      "name": "dogBadgeLabel",
+                      "fill": "#FFFFFF",
+                      "content": "강아지",
                       "fontFamily": "Inter",
-                      "fontSize": 15,
+                      "fontSize": 11,
                       "fontWeight": "600"
                     }
                   ]
                 },
                 {
                   "type": "frame",
-                  "id": "0us02",
-                  "name": "dogImgArea",
-                  "width": "fill_container",
-                  "height": 180,
-                  "fill": {
-                    "type": "image",
-                    "enabled": true,
-                    "url": "./images/generated-1774688250891.png",
-                    "mode": "fill"
-                  },
-                  "cornerRadius": [
-                    0,
-                    0,
-                    16,
-                    16
+                  "id": "UOtWi",
+                  "x": 228,
+                  "y": 80,
+                  "name": "personBadge",
+                  "fill": "#E8748A",
+                  "cornerRadius": 10,
+                  "gap": 4,
+                  "padding": [
+                    4,
+                    8
                   ],
-                  "layout": "vertical",
-                  "gap": 8,
-                  "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
                     {
                       "type": "icon_font",
-                      "id": "chhmK",
-                      "width": 40,
-                      "height": 40,
-                      "iconFontName": "add_photo_alternate",
+                      "id": "feOE5",
+                      "name": "personBadgeIcon",
+                      "width": 12,
+                      "height": 12,
+                      "iconFontName": "face",
                       "iconFontFamily": "Material Symbols Rounded",
-                      "fill": "$color-peach-pink"
+                      "fill": "#FFFFFF"
                     },
                     {
                       "type": "text",
-                      "id": "LzmvO",
-                      "fill": "$color-warm-gray",
-                      "content": "탭하여 사진 선택",
+                      "id": "XIyf3",
+                      "name": "personBadgeLabel",
+                      "fill": "#FFFFFF",
+                      "content": "사람",
                       "fontFamily": "Inter",
-                      "fontSize": 13
+                      "fontSize": 11,
+                      "fontWeight": "600"
                     }
                   ]
                 }
@@ -9738,107 +9762,80 @@
             },
             {
               "type": "frame",
-              "id": "sAhLl",
-              "name": "personCard",
+              "id": "NjaI3",
+              "name": "statusRow",
               "width": "fill_container",
-              "fill": "$color-white",
-              "cornerRadius": 16,
-              "effect": {
-                "type": "shadow",
-                "shadowType": "outer",
-                "color": "#3D2C2E14",
-                "offset": {
-                  "x": 0,
-                  "y": 2
-                },
-                "blur": 8
-              },
-              "layout": "vertical",
+              "gap": 10,
+              "justifyContent": "center",
+              "alignItems": "center",
               "children": [
                 {
                   "type": "frame",
-                  "id": "wrgpP",
-                  "name": "personCardHeader",
-                  "width": "fill_container",
-                  "gap": 8,
+                  "id": "WNoUj",
+                  "name": "dogStatusChip",
+                  "fill": "#EDE9F8",
+                  "cornerRadius": 20,
+                  "gap": 6,
                   "padding": [
-                    14,
-                    16
+                    8,
+                    14
                   ],
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "NBRYV",
-                      "name": "personBadge",
-                      "width": 32,
-                      "height": 32,
-                      "fill": "$color-sky-lavender",
-                      "cornerRadius": 16,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "Si6Mi",
-                          "width": 18,
-                          "height": 18,
-                          "iconFontName": "face",
-                          "iconFontFamily": "Material Symbols Rounded",
-                          "fill": "$color-white"
-                        }
-                      ]
+                      "type": "icon_font",
+                      "id": "RGPiL",
+                      "name": "dogStatusIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "pets",
+                      "iconFontFamily": "Material Symbols Rounded",
+                      "fill": "#9B7FD4"
                     },
                     {
                       "type": "text",
-                      "id": "g1UKA",
-                      "fill": "$color-dark-cocoa",
-                      "content": "사람 사진",
+                      "id": "6TqCA",
+                      "name": "dogStatusText",
+                      "fill": "#9B7FD4",
+                      "content": "강아지 인식됨",
                       "fontFamily": "Inter",
-                      "fontSize": 15,
+                      "fontSize": 12,
                       "fontWeight": "600"
                     }
                   ]
                 },
                 {
                   "type": "frame",
-                  "id": "QDTdo",
-                  "name": "personImgArea",
-                  "width": "fill_container",
-                  "height": 180,
-                  "fill": {
-                    "type": "image",
-                    "enabled": true,
-                    "url": "./images/generated-1774688285452.png",
-                    "mode": "fill"
-                  },
-                  "cornerRadius": [
-                    0,
-                    0,
-                    16,
-                    16
+                  "id": "Q0GRa",
+                  "name": "personStatusChip",
+                  "fill": "#FEF0F0",
+                  "cornerRadius": 20,
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    14
                   ],
-                  "layout": "vertical",
-                  "gap": 8,
-                  "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
                     {
                       "type": "icon_font",
-                      "id": "lQd6h",
-                      "width": 40,
-                      "height": 40,
-                      "iconFontName": "add_photo_alternate",
+                      "id": "sn2AH",
+                      "name": "personStatusIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "face",
                       "iconFontFamily": "Material Symbols Rounded",
-                      "fill": "$color-sky-lavender"
+                      "fill": "#E8748A"
                     },
                     {
                       "type": "text",
-                      "id": "cJDnm",
-                      "fill": "$color-warm-gray",
-                      "content": "탭하여 사진 선택",
+                      "id": "wwzSu",
+                      "name": "personStatusText",
+                      "fill": "#E8748A",
+                      "content": "사람 인식됨",
                       "fontFamily": "Inter",
-                      "fontSize": 13
+                      "fontSize": 12,
+                      "fontWeight": "600"
                     }
                   ]
                 }
