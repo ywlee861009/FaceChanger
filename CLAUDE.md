@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FaceChanger is an Android app (package: `com.kero.face`) built with Jetpack Compose and Material Design 3. The project is a single-module Gradle setup under the `android/` directory.
+FaceChanger is an Android app (package: `com.kero.face`) built with Jetpack Compose and Material Design 3. The project is a multi-module Gradle setup under the `android/` directory.
 
 ## Build & Run Commands
 
@@ -36,6 +36,6 @@ cd android
 - **Architecture Pattern:** MVI (Model-View-Intent)
 - **Project Structure:** Multi-module (feature-based + layer-based)
 - **Entry Point:** `MainActivity.kt` — ComponentActivity using `enableEdgeToEdge()` and Scaffold
-- **Theming:** Custom Material 3 theme (`ui/theme/`) with dynamic color support on Android 12+
+- **Theming:** Custom Material 3 theme (`ui/theme/`) with fixed `lightColorScheme` (dynamic color 미사용)
 - **Build Config:** AGP 9.1.0, Kotlin 2.2.10, Java 11, minSdk 33, targetSdk 36
 - **Dependency Management:** Gradle version catalog at `android/gradle/libs.versions.toml`
