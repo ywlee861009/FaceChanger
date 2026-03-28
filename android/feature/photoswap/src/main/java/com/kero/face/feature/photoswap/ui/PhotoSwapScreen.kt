@@ -62,6 +62,8 @@ fun PhotoSwapScreen(
     ) { uri ->
         if (uri != null) {
             viewModel.dispatch(PhotoSwapIntent.PhotoSelected(uri))
+        } else {
+            viewModel.dispatch(PhotoSwapIntent.PickerCancelled)
         }
     }
 
@@ -72,7 +74,7 @@ fun PhotoSwapScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 PhotoSwapEffect.NavigateBack -> onNavigateBack()

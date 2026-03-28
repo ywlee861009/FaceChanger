@@ -120,14 +120,35 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
             val bbox = dogDetection.boundingBox()
             val dogCategory = dogDetection.categories()
                 .first { it.categoryName().equals("dog", ignoreCase = true) }
+            // TODO: dog face 전용 모델로 교체 시 estimateDogFaceRect() 제거하고
+            //       모델 결과를 직접 사용하면 됨. 호출부(DetectionResult.dogBox) 변경 없음.
+            val faceRect = estimateDogFaceRect(RectF(bbox.left, bbox.top, bbox.right, bbox.bottom))
             BoundingBox(
-                rect = RectF(bbox.left, bbox.top, bbox.right, bbox.bottom),
-                label = "dog",
+                rect = faceRect,
+                label = "dog_face",
                 confidence = dogCategory.score(),
             )
         } finally {
             detector.close()
         }
+    }
+
+    /**
+     * 강아지 전신 bbox에서 얼굴 영역을 추정합니다.
+     * 강아지 얼굴 전용 모델로 교체할 때 이 함수만 제거하면 됩니다.
+     *
+     * 추정 근거: 강아지 얼굴은 전신 bbox의 상단 35%, 가로 중앙 60% 영역에 위치.
+     */
+    private fun estimateDogFaceRect(bodyRect: RectF): RectF {
+        val cx = bodyRect.centerX()
+        val faceW = bodyRect.width() * 0.6f
+        val faceH = bodyRect.height() * 0.35f
+        return RectF(
+            cx - faceW / 2f,
+            bodyRect.top,
+            cx + faceW / 2f,
+            bodyRect.top + faceH,
+        )
     }
 
     override fun close() {

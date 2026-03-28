@@ -29,6 +29,12 @@ class PhotoSwapViewModel(application: Application) : AndroidViewModel(applicatio
     fun dispatch(intent: PhotoSwapIntent) {
         when (intent) {
             is PhotoSwapIntent.PhotoSelected -> analyzePhoto(intent.uri)
+            PhotoSwapIntent.PickerCancelled -> {
+                // 사진이 아직 없을 때 취소하면 뒤로가기, 이미 있으면 현재 사진 유지
+                if (_state.value.bitmap == null) {
+                    viewModelScope.launch { _effect.send(PhotoSwapEffect.NavigateBack) }
+                }
+            }
             PhotoSwapIntent.NavigateBack -> viewModelScope.launch {
                 _effect.send(PhotoSwapEffect.NavigateBack)
             }

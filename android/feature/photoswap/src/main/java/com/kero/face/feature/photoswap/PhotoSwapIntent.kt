@@ -4,5 +4,6 @@ import android.net.Uri
 
 sealed interface PhotoSwapIntent {
     data class PhotoSelected(val uri: Uri) : PhotoSwapIntent
+    data object PickerCancelled : PhotoSwapIntent
     data object NavigateBack : PhotoSwapIntent
 }
