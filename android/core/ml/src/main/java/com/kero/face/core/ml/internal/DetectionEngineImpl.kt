@@ -63,9 +63,19 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
     }
 
     override fun detectBitmap(bitmap: Bitmap): DetectionResult {
-        val mpImage = BitmapImageBuilder(bitmap).build()
-        val faceResult = detectFaceInImage(mpImage)
-        val dogResult = detectDogInImage(mpImage)
+        // ARGB_8888이 아닌 경우 변환 (MediaPipe 요구사항)
+        val argbBitmap = if (bitmap.config != Bitmap.Config.ARGB_8888) {
+            android.util.Log.w("DetectionEngine", "비트맵 포맷 변환: ${bitmap.config} → ARGB_8888")
+            bitmap.copy(Bitmap.Config.ARGB_8888, false)
+        } else {
+            bitmap
+        }
+        // face/dog 에 각각 별도 MPImage 생성 (동일 인스턴스 재사용 시 두 번째 호출 실패 가능)
+        val faceMpImage = BitmapImageBuilder(argbBitmap).build()
+        val dogMpImage = BitmapImageBuilder(argbBitmap).build()
+        val faceResult = detectFaceInImage(faceMpImage)
+        val dogResult = detectDogInImage(dogMpImage)
+        android.util.Log.d("DetectionEngine", "detectBitmap 결과: face=$faceResult, dog=$dogResult")
         return DetectionResult(
             personFace = faceResult,
             dogBox = dogResult,
@@ -85,6 +95,7 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
         val detector = FaceLandmarker.createFromOptions(context, options)
         return try {
             val result = detector.detect(mpImage)
+            android.util.Log.d("DetectionEngine", "FaceLandmarker 결과: ${result.faceLandmarks().size}개 얼굴")
             if (result.faceLandmarks().isEmpty()) return null
             val landmarks = result.faceLandmarks()[0]
             val points = landmarks.map { PointF(it.x(), it.y()) }
@@ -97,6 +108,9 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
                 if (p.y > maxY) maxY = p.y
             }
             FaceLandmarks(points = points, boundingBox = RectF(minX, minY, maxX, maxY))
+        } catch (e: Exception) {
+            android.util.Log.e("DetectionEngine", "FaceLandmarker 오류", e)
+            throw e
         } finally {
             detector.close()
         }
@@ -108,12 +122,16 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
                 BaseOptions.builder().setModelAssetPath("efficientdet_lite0.tflite").build()
             )
             .setRunningMode(RunningMode.IMAGE)
-            .setMaxResults(5)
-            .setScoreThreshold(0.2f)
+            .setMaxResults(10)
+            .setScoreThreshold(0.1f)
             .build()
         val detector = ObjectDetector.createFromOptions(context, options)
         return try {
             val result = detector.detect(mpImage)
+            android.util.Log.d("DetectionEngine", "ObjectDetector 결과: ${result.detections().size}개 감지")
+            result.detections().forEachIndexed { i, det ->
+                android.util.Log.d("DetectionEngine", "  [$i] categories=${det.categories().map { "${it.categoryName()}(${it.score()})" }}")
+            }
             val dogDetection = result.detections().firstOrNull { detection ->
                 detection.categories().any { it.categoryName().equals("dog", ignoreCase = true) }
             } ?: return null
@@ -128,6 +146,9 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
                 label = "dog_face",
                 confidence = dogCategory.score(),
             )
+        } catch (e: Exception) {
+            android.util.Log.e("DetectionEngine", "ObjectDetector 오류", e)
+            throw e
         } finally {
             detector.close()
         }

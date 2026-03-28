@@ -8,4 +8,5 @@ data class PhotoSwapState(
     val detectionResult: DetectionResult? = null,
     val isAnalyzing: Boolean = false,
     val error: String? = null,
+    val debugInfo: String? = null,
 )

@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -134,6 +138,12 @@ fun PhotoSwapScreen(
                     )
 
                     DetectionStatusRow(detectionResult = state.detectionResult)
+
+                    // 디버그 패널
+                    val debugText = state.debugInfo ?: state.error
+                    if (debugText != null) {
+                        DebugPanel(text = debugText, isError = state.error != null)
+                    }
 
                     Button(
                         onClick = {
@@ -275,6 +285,31 @@ private fun DetectionStatusRow(detectionResult: DetectionResult?) {
             label = "강아지",
             detected = detectionResult?.dogBox != null,
             color = Color(0xFFFF9800),
+        )
+    }
+}
+
+@Composable
+private fun DebugPanel(text: String, isError: Boolean) {
+    val bgColor = if (isError) Color(0xFFFFEBEB) else Color(0xFF1A1A2E)
+    val borderColor = if (isError) Color(0xFFE53935) else Color(0xFF00BCD4)
+    val textColor = if (isError) Color(0xFFB71C1C) else Color(0xFFE0F7FA)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(bgColor, RoundedCornerShape(8.dp))
+            .border(1.5.dp, borderColor, RoundedCornerShape(8.dp))
+            .padding(10.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                fontSize = androidx.compose.ui.unit.TextUnit(13f, androidx.compose.ui.unit.TextUnitType.Sp),
+                lineHeight = androidx.compose.ui.unit.TextUnit(20f, androidx.compose.ui.unit.TextUnitType.Sp),
+            ),
+            color = textColor,
         )
     }
 }
