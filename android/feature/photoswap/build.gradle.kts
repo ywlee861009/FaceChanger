@@ -36,4 +36,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(project(":core:ui"))
+    implementation(project(":core:model"))
+    implementation(project(":core:ml"))
 }

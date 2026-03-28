@@ -1,7 +1,6 @@
 package com.kero.face.feature.photoswap
 
 sealed interface PhotoSwapEffect {
-    data object NavigateToResult : PhotoSwapEffect
     data object NavigateBack : PhotoSwapEffect
     data class ShowError(val message: String) : PhotoSwapEffect
 }

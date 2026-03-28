@@ -1,14 +1,12 @@
 package com.kero.face.feature.photoswap.ui
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.net.Uri
+import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +17,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,12 +34,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kero.face.core.model.DetectionResult
 import com.kero.face.feature.photoswap.PhotoSwapEffect
 import com.kero.face.feature.photoswap.PhotoSwapIntent
 import com.kero.face.feature.photoswap.PhotoSwapViewModel
@@ -54,39 +55,36 @@ fun PhotoSwapScreen(
     modifier: Modifier = Modifier,
     viewModel: PhotoSwapViewModel = viewModel(),
 ) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val hasMediaPermission = ContextCompat.checkSelfPermission(
-        context, Manifest.permission.READ_MEDIA_IMAGES
-    ) == PackageManager.PERMISSION_GRANTED
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.dispatch(PhotoSwapIntent.PhotoSelected(uri))
+        }
+    }
+
+    // 화면 진입 시 자동으로 이미지 피커 실행
+    LaunchedEffect(Unit) {
+        imagePicker.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                PhotoSwapEffect.NavigateToResult -> onNavigateToResult()
                 PhotoSwapEffect.NavigateBack -> onNavigateBack()
                 is PhotoSwapEffect.ShowError -> { /* TODO: 스낵바 */ }
             }
         }
     }
 
-    val dogPhotoPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.dispatch(PhotoSwapIntent.DogPhotoSelected(it)) }
-    }
-
-    val personPhotoPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.dispatch(PhotoSwapIntent.PersonPhotoSelected(it)) }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("사진 변경") },
+                title = { Text("사진으로 얼굴 바꾸기") },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.dispatch(PhotoSwapIntent.NavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로")
@@ -100,91 +98,207 @@ fun PhotoSwapScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                PhotoPickerCard(
-                    label = "강아지 사진",
-                    uri = state.dogPhotoUri,
-                    onClick = {
-                        dogPhotoPicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+            val bitmap = state.bitmap
+        val detectionResult = state.detectionResult
 
-                PhotoPickerCard(
-                    label = "사람 사진",
-                    uri = state.personPhotoUri,
-                    onClick = {
-                        personPhotoPicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        when {
+                state.isAnalyzing -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            CircularProgressIndicator()
+                            Text("얼굴을 분석하는 중...", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
 
-            Spacer(modifier = Modifier.weight(1f))
+                bitmap != null -> {
+                    ImageWithOverlay(
+                        bitmap = bitmap,
+                        detectionResult = detectionResult,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    )
 
-            Button(
-                onClick = { viewModel.dispatch(PhotoSwapIntent.StartSwap) },
-                enabled = state.isSwapEnabled,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (state.isProcessing) "처리 중..." else "교환하기")
+                    DetectionStatusRow(detectionResult = state.detectionResult)
+
+                    Button(
+                        onClick = {
+                            imagePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("사진 다시 선택")
+                    }
+                }
+
+                else -> {
+                    // 이미지 미선택 상태 (피커가 닫혔을 때)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = MaterialTheme.shapes.large,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text("사진을 선택해주세요", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "강아지와 사람이 함께 있는 사진",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            imagePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("사진 선택")
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PhotoPickerCard(
-    label: String,
-    uri: Uri?,
-    onClick: () -> Unit,
+private fun ImageWithOverlay(
+    bitmap: Bitmap,
+    detectionResult: DetectionResult?,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
+    Box(modifier = modifier) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "선택된 사진",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
 
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = 2.dp,
-                    color = if (uri != null) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (uri == null) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "사진 선택",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                // TODO: 선택된 이미지 표시 (Coil 등)
-                Text(
-                    text = "선택됨",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+        if (detectionResult != null) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val canvasW = size.width
+                val canvasH = size.height
+                val bitmapW = bitmap.width.toFloat()
+                val bitmapH = bitmap.height.toFloat()
+
+                // ContentScale.Fit 에 맞춰 실제 이미지가 그려지는 영역 계산
+                val bitmapAspect = bitmapW / bitmapH
+                val canvasAspect = canvasW / canvasH
+                val displayW: Float
+                val displayH: Float
+                val offsetX: Float
+                val offsetY: Float
+                if (bitmapAspect > canvasAspect) {
+                    displayW = canvasW
+                    displayH = canvasW / bitmapAspect
+                    offsetX = 0f
+                    offsetY = (canvasH - displayH) / 2f
+                } else {
+                    displayH = canvasH
+                    displayW = canvasH * bitmapAspect
+                    offsetX = (canvasW - displayW) / 2f
+                    offsetY = 0f
+                }
+
+                // 사람 얼굴 원 (파란색) — 정규화된 [0,1] 좌표
+                detectionResult.personFace?.boundingBox?.let { box ->
+                    val cx = offsetX + (box.left + box.right) / 2f * displayW
+                    val cy = offsetY + (box.top + box.bottom) / 2f * displayH
+                    val rx = box.width() / 2f * displayW
+                    val ry = box.height() / 2f * displayH
+                    drawCircle(
+                        color = Color(0xFF2196F3),
+                        radius = (rx + ry) / 2f,
+                        center = Offset(cx, cy),
+                        style = Stroke(width = 5f),
+                    )
+                }
+
+                // 강아지 원 (주황색) — 픽셀 좌표
+                detectionResult.dogBox?.rect?.let { box ->
+                    val cx = offsetX + (box.left + box.right) / 2f / bitmapW * displayW
+                    val cy = offsetY + (box.top + box.bottom) / 2f / bitmapH * displayH
+                    val rx = box.width() / 2f / bitmapW * displayW
+                    val ry = box.height() / 2f / bitmapH * displayH
+                    drawCircle(
+                        color = Color(0xFFFF9800),
+                        radius = (rx + ry) / 2f,
+                        center = Offset(cx, cy),
+                        style = Stroke(width = 5f),
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun DetectionStatusRow(detectionResult: DetectionResult?) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DetectionChip(
+            label = "사람 얼굴",
+            detected = detectionResult?.personFace != null,
+            color = Color(0xFF2196F3),
+        )
+        DetectionChip(
+            label = "강아지",
+            detected = detectionResult?.dogBox != null,
+            color = Color(0xFFFF9800),
+        )
+    }
+}
+
+@Composable
+private fun DetectionChip(
+    label: String,
+    detected: Boolean,
+    color: Color,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(
+                    color = if (detected) color else MaterialTheme.colorScheme.outline,
+                    shape = CircleShape,
+                ),
+        )
+        Text(
+            text = if (detected) "$label 감지됨" else "$label 미감지",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (detected) color else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

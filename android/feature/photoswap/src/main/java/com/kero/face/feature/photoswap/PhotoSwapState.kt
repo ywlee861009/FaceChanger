@@ -1,12 +1,11 @@
 package com.kero.face.feature.photoswap
 
-import android.net.Uri
+import android.graphics.Bitmap
+import com.kero.face.core.model.DetectionResult
 
 data class PhotoSwapState(
-    val dogPhotoUri: Uri? = null,
-    val personPhotoUri: Uri? = null,
-    val isProcessing: Boolean = false,
+    val bitmap: Bitmap? = null,
+    val detectionResult: DetectionResult? = null,
+    val isAnalyzing: Boolean = false,
     val error: String? = null,
-) {
-    val isSwapEnabled: Boolean get() = dogPhotoUri != null && personPhotoUri != null && !isProcessing
-}
+)

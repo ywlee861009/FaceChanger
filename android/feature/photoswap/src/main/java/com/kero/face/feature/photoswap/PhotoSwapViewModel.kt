@@ -1,8 +1,13 @@
 package com.kero.face.feature.photoswap
 
+import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.kero.face.core.ml.DetectionEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +16,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class PhotoSwapViewModel : ViewModel() {
+class PhotoSwapViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val detectionEngine = DetectionEngine.create(application)
 
     private val _state = MutableStateFlow(PhotoSwapState())
     val state: StateFlow<PhotoSwapState> = _state.asStateFlow()
@@ -21,27 +28,39 @@ class PhotoSwapViewModel : ViewModel() {
 
     fun dispatch(intent: PhotoSwapIntent) {
         when (intent) {
-            is PhotoSwapIntent.DogPhotoSelected -> {
-                _state.update { it.copy(dogPhotoUri = intent.uri, error = null) }
-            }
-            is PhotoSwapIntent.PersonPhotoSelected -> {
-                _state.update { it.copy(personPhotoUri = intent.uri, error = null) }
-            }
-            PhotoSwapIntent.StartSwap -> startSwap()
+            is PhotoSwapIntent.PhotoSelected -> analyzePhoto(intent.uri)
             PhotoSwapIntent.NavigateBack -> viewModelScope.launch {
                 _effect.send(PhotoSwapEffect.NavigateBack)
             }
         }
     }
 
-    private fun startSwap() {
-        val state = _state.value
-        if (!state.isSwapEnabled) return
-
-        // TODO: 실제 얼굴 교환 처리 구현
-        viewModelScope.launch {
-            _state.update { it.copy(isProcessing = true) }
-            _effect.send(PhotoSwapEffect.NavigateToResult)
+    private fun analyzePhoto(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.update { it.copy(isAnalyzing = true, error = null) }
+            try {
+                val bitmap = loadBitmap(uri) ?: error("이미지를 불러올 수 없습니다")
+                val result = detectionEngine.detectBitmap(bitmap)
+                _state.update {
+                    it.copy(bitmap = bitmap, detectionResult = result, isAnalyzing = false)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isAnalyzing = false, error = e.message) }
+                _effect.send(PhotoSwapEffect.ShowError(e.message ?: "오류가 발생했습니다"))
+            }
         }
+    }
+
+    private fun loadBitmap(uri: Uri): Bitmap? = try {
+        getApplication<Application>().contentResolver.openInputStream(uri)?.use { stream ->
+            BitmapFactory.decodeStream(stream)
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        detectionEngine.close()
     }
 }
