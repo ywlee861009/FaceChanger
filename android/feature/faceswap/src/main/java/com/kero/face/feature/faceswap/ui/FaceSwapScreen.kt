@@ -8,6 +8,12 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +35,7 @@ import com.kero.face.core.ml.DetectionEngine
 import com.kero.face.core.ui.component.CameraPermissionScreen
 import com.kero.face.core.ui.component.DetectionOverlay
 import com.kero.face.core.ui.component.GuideCard
+import com.kero.face.feature.faceswap.FaceSwapEffect
 import com.kero.face.feature.faceswap.FaceSwapIntent
 import com.kero.face.feature.faceswap.FaceSwapViewModel
 import com.kero.face.feature.faceswap.GuideMessage
@@ -38,6 +45,8 @@ fun FaceSwapScreen(
     viewModel: FaceSwapViewModel,
     cameraManager: CameraManager,
     detectionEngine: DetectionEngine,
+    onNavigateToResult: () -> Unit,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -54,6 +63,16 @@ fun FaceSwapScreen(
         hasCameraPermission = granted
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                FaceSwapEffect.NavigateToResult -> onNavigateToResult()
+                FaceSwapEffect.NavigateBack -> onNavigateBack()
+                is FaceSwapEffect.ShowToast -> { /* TODO: 토스트 */ }
+            }
+        }
+    }
+
     if (!hasCameraPermission) {
         CameraPermissionScreen(
             onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
@@ -64,6 +83,7 @@ fun FaceSwapScreen(
             viewModel = viewModel,
             cameraManager = cameraManager,
             detectionEngine = detectionEngine,
+            onNavigateBack = onNavigateBack,
             modifier = modifier,
         )
     }
@@ -74,6 +94,7 @@ private fun CameraContent(
     viewModel: FaceSwapViewModel,
     cameraManager: CameraManager,
     detectionEngine: DetectionEngine,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -154,6 +175,27 @@ private fun CameraContent(
                     .align(Alignment.TopCenter)
                     .padding(top = 48.dp),
             )
+        }
+
+        IconButton(
+            onClick = onNavigateBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 48.dp, start = 8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "뒤로",
+            )
+        }
+
+        FloatingActionButton(
+            onClick = { viewModel.dispatch(FaceSwapIntent.Capture) },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp),
+        ) {
+            Text("촬영")
         }
     }
 }

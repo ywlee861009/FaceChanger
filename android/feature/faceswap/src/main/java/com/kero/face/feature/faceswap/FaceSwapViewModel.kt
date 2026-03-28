@@ -1,6 +1,7 @@
 package com.kero.face.feature.faceswap
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kero.face.feature.faceswap.internal.FaceSwapReducer
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class FaceSwapViewModel : ViewModel() {
 
@@ -33,6 +35,17 @@ class FaceSwapViewModel : ViewModel() {
             }
             is FaceSwapIntent.DismissError -> {
                 _state.update { it.copy(error = null) }
+            }
+            is FaceSwapIntent.Capture -> {
+                // TODO: 현재 프레임 캡처 처리
+                viewModelScope.launch {
+                    _effect.send(FaceSwapEffect.NavigateToResult)
+                }
+            }
+            is FaceSwapIntent.NavigateBack -> {
+                viewModelScope.launch {
+                    _effect.send(FaceSwapEffect.NavigateBack)
+                }
             }
         }
     }

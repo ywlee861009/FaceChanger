@@ -7,4 +7,6 @@ sealed interface FaceSwapIntent {
     data object StopCamera : FaceSwapIntent
     data class OnFrameAnalyzed(val result: DetectionResult) : FaceSwapIntent
     data object DismissError : FaceSwapIntent
+    data object Capture : FaceSwapIntent
+    data object NavigateBack : FaceSwapIntent
 }

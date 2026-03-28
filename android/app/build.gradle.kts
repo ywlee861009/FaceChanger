@@ -55,8 +55,11 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:camera"))
     implementation(project(":core:ml"))
-    implementation(project(":feature:faceswap"))
     implementation(project(":feature:splash"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:faceswap"))
+    implementation(project(":feature:photoswap"))
+    implementation(project(":feature:result"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
