@@ -109,7 +109,7 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
             )
             .setRunningMode(RunningMode.IMAGE)
             .setMaxResults(5)
-            .setScoreThreshold(0.3f)
+            .setScoreThreshold(0.2f)
             .build()
         val detector = ObjectDetector.createFromOptions(context, options)
         return try {
@@ -137,12 +137,32 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
      * 강아지 전신 bbox에서 얼굴 영역을 추정합니다.
      * 강아지 얼굴 전용 모델로 교체할 때 이 함수만 제거하면 됩니다.
      *
-     * 추정 근거: 강아지 얼굴은 전신 bbox의 상단 35%, 가로 중앙 60% 영역에 위치.
+     * 자세 추정:
+     * - aspectRatio > 1.3 (가로 긴 bbox): 누운 자세 → bbox 상단 50%, 가로 55%
+     * - aspectRatio 0.8~1.3 (정사각형): 카메라 정면 클로즈업 → 상단 70%, 가로 75%
+     * - aspectRatio < 0.8 (세로 긴 bbox): 서있음/앉음 → 상단 28%, 가로 60%
      */
     private fun estimateDogFaceRect(bodyRect: RectF): RectF {
         val cx = bodyRect.centerX()
-        val faceW = bodyRect.width() * 0.6f
-        val faceH = bodyRect.height() * 0.35f
+        val bboxW = bodyRect.width()
+        val bboxH = bodyRect.height()
+        val aspectRatio = bboxW / bboxH.coerceAtLeast(1f)
+
+        val (faceW, faceH) = when {
+            aspectRatio > 1.3f -> {
+                // 누운 자세: 가로가 훨씬 길면 bbox 위쪽 절반이 머리 영역
+                Pair(bboxW * 0.55f, bboxH * 0.50f)
+            }
+            aspectRatio > 0.8f -> {
+                // 정사각형에 가까운 경우: 클로즈업이거나 앉은 정면 → bbox 대부분이 머리
+                Pair(bboxW * 0.75f, bboxH * 0.70f)
+            }
+            else -> {
+                // 세로 긴 전신 사진: 서있거나 앉은 측면 → 상단 28%
+                Pair(bboxW * 0.60f, bboxH * 0.28f)
+            }
+        }
+
         return RectF(
             cx - faceW / 2f,
             bodyRect.top,
