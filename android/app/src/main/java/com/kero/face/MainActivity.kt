@@ -6,12 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kero.face.core.ui.theme.FaceChangerTheme
 import com.kero.face.feature.faceswap.FaceSwapViewModel
 import com.kero.face.feature.faceswap.ui.FaceSwapScreen
+import com.kero.face.feature.splash.ui.SplashScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,16 +26,24 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FaceChangerTheme {
-                val cameraManager = remember { container.createCameraManager() }
-                val detectionEngine = remember { container.createDetectionEngine() }
-                val viewModel: FaceSwapViewModel = viewModel()
+                var showSplash by remember { mutableStateOf(true) }
 
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    FaceSwapScreen(
-                        viewModel = viewModel,
-                        cameraManager = cameraManager,
-                        detectionEngine = detectionEngine,
-                    )
+                    if (showSplash) {
+                        SplashScreen(
+                            onNavigateToHome = { showSplash = false },
+                        )
+                    } else {
+                        val cameraManager = remember { container.createCameraManager() }
+                        val detectionEngine = remember { container.createDetectionEngine() }
+                        val viewModel: FaceSwapViewModel = viewModel()
+
+                        FaceSwapScreen(
+                            viewModel = viewModel,
+                            cameraManager = cameraManager,
+                            detectionEngine = detectionEngine,
+                        )
+                    }
                 }
             }
         }

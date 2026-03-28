@@ -56,6 +56,7 @@ dependencies {
     implementation(project(":core:camera"))
     implementation(project(":core:ml"))
     implementation(project(":feature:faceswap"))
+    implementation(project(":feature:splash"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
