@@ -60,6 +60,7 @@ dependencies {
     implementation(project(":feature:faceswap"))
     implementation(project(":feature:photoswap"))
     implementation(project(":feature:result"))
+    implementation(project(":feature:gallery"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

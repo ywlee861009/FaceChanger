@@ -1,6 +1,7 @@
 package com.kero.face
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kero.face.core.ui.theme.FaceChangerTheme
 import com.kero.face.feature.faceswap.FaceSwapViewModel
 import com.kero.face.feature.faceswap.ui.FaceSwapScreen
+import com.kero.face.feature.gallery.ui.GalleryScreen
 import com.kero.face.feature.home.ui.HomeScreen
 import com.kero.face.feature.photoswap.ui.PhotoSwapScreen
 import com.kero.face.feature.result.ui.ResultScreen
@@ -51,6 +53,7 @@ class MainActivity : ComponentActivity() {
                     screenStack = screenStack.dropLast(1) + screen
                 }
 
+                var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
                 var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
                 // Home 화면에서 뒤로가기 두 번 → 앱 종료
@@ -80,7 +83,7 @@ class MainActivity : ComponentActivity() {
                         AppScreen.Home -> {
                             HomeScreen(
                                 onNavigateToLiveCamera = { push(AppScreen.LiveCamera) },
-                                onNavigateToPhotoSwap = { push(AppScreen.PhotoSwap) },
+                                onNavigateToPhotoSwap = { push(AppScreen.Gallery) },
                             )
                         }
 
@@ -98,8 +101,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        AppScreen.Gallery -> {
+                            GalleryScreen(
+                                onPhotoSelected = { uri ->
+                                    pendingPhotoUri = uri
+                                    push(AppScreen.PhotoSwap)
+                                },
+                                onNavigateBack = { pop() },
+                            )
+                        }
+
                         AppScreen.PhotoSwap -> {
                             PhotoSwapScreen(
+                                initialPhotoUri = pendingPhotoUri,
                                 onNavigateToResult = { push(AppScreen.Result(ResultSource.PhotoSwap)) },
                                 onNavigateBack = { pop() },
                             )

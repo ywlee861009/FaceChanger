@@ -11,6 +11,7 @@ composeBom = "2024.09.00"
 camerax = "1.5.0-alpha06"
 mediapipe = "0.10.26"
 coroutines = "1.10.1"
+coil = "3.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +44,9 @@ mediapipe-vision = { group = "com.google.mediapipe", name = "tasks-vision", vers
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Coil
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

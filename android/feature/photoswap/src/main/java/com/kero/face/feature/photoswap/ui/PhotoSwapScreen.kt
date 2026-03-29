@@ -1,9 +1,7 @@
 package com.kero.face.feature.photoswap.ui
 
 import android.graphics.Bitmap
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,25 +55,15 @@ fun PhotoSwapScreen(
     onNavigateToResult: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    initialPhotoUri: Uri? = null,
     viewModel: PhotoSwapViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val imagePicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        if (uri != null) {
-            viewModel.dispatch(PhotoSwapIntent.PhotoSelected(uri))
-        } else {
-            viewModel.dispatch(PhotoSwapIntent.PickerCancelled)
+    LaunchedEffect(initialPhotoUri) {
+        if (initialPhotoUri != null) {
+            viewModel.dispatch(PhotoSwapIntent.PhotoSelected(initialPhotoUri))
         }
-    }
-
-    // 화면 진입 시 자동으로 이미지 피커 실행
-    LaunchedEffect(Unit) {
-        imagePicker.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
     }
 
     LaunchedEffect(viewModel) {
@@ -146,11 +134,7 @@ fun PhotoSwapScreen(
                     }
 
                     Button(
-                        onClick = {
-                            imagePicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        },
+                        onClick = onNavigateBack,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("사진 다시 선택")
@@ -183,11 +167,7 @@ fun PhotoSwapScreen(
                     }
 
                     Button(
-                        onClick = {
-                            imagePicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        },
+                        onClick = onNavigateBack,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("사진 선택")
