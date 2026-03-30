@@ -1,6 +1,7 @@
 package com.kero.face
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+                var pendingSwappedBitmap by remember { mutableStateOf<Bitmap?>(null) }
                 var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
                 // Home 화면에서 뒤로가기 두 번 → 앱 종료
@@ -114,7 +116,10 @@ class MainActivity : ComponentActivity() {
                         AppScreen.PhotoSwap -> {
                             PhotoSwapScreen(
                                 initialPhotoUri = pendingPhotoUri,
-                                onNavigateToResult = { push(AppScreen.Result(ResultSource.PhotoSwap)) },
+                                onNavigateToResult = { bitmap ->
+                                    pendingSwappedBitmap = bitmap
+                                    push(AppScreen.Result(ResultSource.PhotoSwap))
+                                },
                                 onNavigateBack = { pop() },
                             )
                         }
@@ -127,11 +132,15 @@ class MainActivity : ComponentActivity() {
 
                             ResultScreen(
                                 retryLabel = retryLabel,
+                                swappedBitmap = pendingSwappedBitmap,
                                 onNavigateBack = { pop() },
-                                onShare = {
-                                    // TODO: 실제 공유 데이터 전달
+                                onShare = { uri ->
                                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "image/*"
+                                        if (uri != null) {
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
                                     }
                                     startActivity(Intent.createChooser(shareIntent, "공유하기"))
                                 },

@@ -1,5 +1,8 @@
 package com.kero.face.feature.result.ui
 
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,22 +13,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,19 +47,27 @@ import com.kero.face.feature.result.ResultViewModel
 @Composable
 fun ResultScreen(
     retryLabel: String,
+    swappedBitmap: Bitmap?,
     onNavigateBack: () -> Unit,
-    onShare: () -> Unit,
+    onShare: (Uri?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ResultViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(swappedBitmap) {
+        if (swappedBitmap != null) {
+            viewModel.dispatch(ResultIntent.Initialize(swappedBitmap))
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 ResultEffect.NavigateBack -> onNavigateBack()
-                ResultEffect.ShareResult -> onShare()
-                is ResultEffect.ShowMessage -> { /* TODO: 스낵바 */ }
+                is ResultEffect.ShareResult -> onShare(effect.uri)
+                is ResultEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
@@ -65,6 +83,7 @@ fun ResultScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier,
     ) { innerPadding ->
         Column(
@@ -73,7 +92,6 @@ fun ResultScreen(
                 .padding(innerPadding)
                 .padding(24.dp),
         ) {
-            // TODO: 결과 이미지 표시
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,11 +102,21 @@ fun ResultScreen(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "교환된 이미지",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                val bitmap = state.bitmap
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "교환된 이미지",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    Text(
+                        text = "이미지를 불러오는 중...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -107,9 +135,17 @@ fun ResultScreen(
                 Button(
                     onClick = { viewModel.dispatch(ResultIntent.Save) },
                     modifier = Modifier.weight(1f),
-                    enabled = !state.isSaving,
+                    enabled = !state.isSaving && !state.isSaved,
                 ) {
-                    Text("저장")
+                    if (state.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    } else {
+                        Text(if (state.isSaved) "저장됨" else "저장")
+                    }
                 }
 
                 Button(
