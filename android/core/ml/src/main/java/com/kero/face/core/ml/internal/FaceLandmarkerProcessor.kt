@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 internal class FaceLandmarkerProcessor(private val context: Context) {
 
     private var faceLandmarker: FaceLandmarker? = null
-    private var latestResult: FaceLandmarks? = null
+    @Volatile private var latestResult: FaceLandmarks? = null
 
     fun initialize() {
         val baseOptions = BaseOptions.builder()
@@ -56,8 +56,8 @@ internal class FaceLandmarkerProcessor(private val context: Context) {
 
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
-        var maxX = Float.MIN_VALUE
-        var maxY = Float.MIN_VALUE
+        var maxX = -Float.MAX_VALUE
+        var maxY = -Float.MAX_VALUE
         for (point in points) {
             if (point.x < minX) minX = point.x
             if (point.y < minY) minY = point.y

@@ -11,7 +11,7 @@ import com.kero.face.core.model.BoundingBox
 internal class DogDetectorProcessor(private val context: Context) {
 
     private var objectDetector: ObjectDetector? = null
-    private var latestResult: BoundingBox? = null
+    @Volatile private var latestResult: BoundingBox? = null
 
     fun initialize() {
         val baseOptions = BaseOptions.builder()
