@@ -2,6 +2,9 @@ package com.kero.face.feature.photoswap.ui
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,7 +55,7 @@ import com.kero.face.feature.photoswap.PhotoSwapViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotoSwapScreen(
-    onNavigateToResult: () -> Unit,
+    onNavigateToResult: (Bitmap) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     initialPhotoUri: Uri? = null,
@@ -71,6 +74,7 @@ fun PhotoSwapScreen(
             when (effect) {
                 PhotoSwapEffect.NavigateBack -> onNavigateBack()
                 is PhotoSwapEffect.ShowError -> { /* TODO: 스낵바 */ }
+                is PhotoSwapEffect.NavigateToResult -> onNavigateToResult(effect.bitmap)
             }
         }
     }
@@ -131,6 +135,27 @@ fun PhotoSwapScreen(
                     val debugText = state.debugInfo ?: state.error
                     if (debugText != null) {
                         DebugPanel(text = debugText, isError = state.error != null)
+                    }
+
+                    if (state.canSwap) {
+                        Button(
+                            onClick = { viewModel.dispatch(PhotoSwapIntent.PerformSwap) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isSwapping,
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        ) {
+                            if (state.isSwapping) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text("얼굴 교환하기")
+                        }
                     }
 
                     Button(

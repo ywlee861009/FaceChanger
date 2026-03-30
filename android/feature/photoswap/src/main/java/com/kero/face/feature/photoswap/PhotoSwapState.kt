@@ -7,6 +7,10 @@ data class PhotoSwapState(
     val bitmap: Bitmap? = null,
     val detectionResult: DetectionResult? = null,
     val isAnalyzing: Boolean = false,
+    val isSwapping: Boolean = false,
     val error: String? = null,
     val debugInfo: String? = null,
-)
+) {
+    val canSwap: Boolean
+        get() = detectionResult?.personFace != null && detectionResult.dogBox != null
+}

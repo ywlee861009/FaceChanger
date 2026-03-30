@@ -3,12 +3,17 @@ package com.kero.face.feature.photoswap
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Matrix
+import android.graphics.Path
+import android.graphics.RectF
 import android.media.ExifInterface
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kero.face.core.ml.DetectionEngine
+import com.kero.face.core.model.BoundingBox
+import com.kero.face.core.model.FaceLandmarks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +45,7 @@ class PhotoSwapViewModel(application: Application) : AndroidViewModel(applicatio
             PhotoSwapIntent.NavigateBack -> viewModelScope.launch {
                 _effect.send(PhotoSwapEffect.NavigateBack)
             }
+            PhotoSwapIntent.PerformSwap -> performSwap()
         }
     }
 
@@ -76,6 +82,80 @@ class PhotoSwapViewModel(application: Application) : AndroidViewModel(applicatio
                 _effect.send(PhotoSwapEffect.ShowError(errMsg))
             }
         }
+    }
+
+    private fun performSwap() {
+        val state = _state.value
+        val bitmap = state.bitmap ?: return
+        val humanFace = state.detectionResult?.personFace ?: return
+        val dogBox = state.detectionResult?.dogBox ?: return
+
+        viewModelScope.launch(Dispatchers.Default) {
+            _state.update { it.copy(isSwapping = true) }
+            try {
+                val swapped = applyFaceSwap(bitmap, humanFace, dogBox)
+                _effect.send(PhotoSwapEffect.NavigateToResult(swapped))
+            } catch (e: Exception) {
+                android.util.Log.e("PhotoSwap", "얼굴 교환 실패", e)
+                _state.update { it.copy(isSwapping = false, error = "교환 실패: ${e.message}") }
+            }
+        }
+    }
+
+    /**
+     * 강아지 얼굴 영역을 잘라내어 사람 얼굴 영역에 타원형으로 붙여넣은 비트맵 반환.
+     * - humanFace.boundingBox: 정규화 좌표 [0,1]
+     * - dogBox.rect: 픽셀 좌표
+     */
+    private fun applyFaceSwap(
+        bitmap: Bitmap,
+        humanFace: FaceLandmarks,
+        dogBox: BoundingBox,
+    ): Bitmap {
+        val w = bitmap.width.toFloat()
+        val h = bitmap.height.toFloat()
+
+        // 사람 얼굴 영역 (정규화 → 픽셀, 여백 10% 추가)
+        val hBox = humanFace.boundingBox
+        val marginX = hBox.width() * 0.1f
+        val marginY = hBox.height() * 0.1f
+        val hLeft = ((hBox.left - marginX) * w).toInt().coerceIn(0, bitmap.width)
+        val hTop = ((hBox.top - marginY) * h).toInt().coerceIn(0, bitmap.height)
+        val hRight = ((hBox.right + marginX) * w).toInt().coerceIn(0, bitmap.width)
+        val hBottom = ((hBox.bottom + marginY) * h).toInt().coerceIn(0, bitmap.height)
+        val hWidth = (hRight - hLeft).coerceAtLeast(1)
+        val hHeight = (hBottom - hTop).coerceAtLeast(1)
+
+        // 강아지 얼굴 영역 (픽셀 좌표)
+        val dBox = dogBox.rect
+        val dLeft = dBox.left.toInt().coerceIn(0, bitmap.width)
+        val dTop = dBox.top.toInt().coerceIn(0, bitmap.height)
+        val dRight = dBox.right.toInt().coerceIn(0, bitmap.width)
+        val dBottom = dBox.bottom.toInt().coerceIn(0, bitmap.height)
+        val dWidth = (dRight - dLeft).coerceAtLeast(1)
+        val dHeight = (dBottom - dTop).coerceAtLeast(1)
+
+        // 강아지 얼굴 크롭 → 사람 얼굴 크기에 맞게 스케일
+        val dogCrop = Bitmap.createBitmap(bitmap, dLeft, dTop, dWidth, dHeight)
+        val scaledDog = Bitmap.createScaledBitmap(dogCrop, hWidth, hHeight, true)
+        dogCrop.recycle()
+
+        // 원본 복사 후 타원 클립으로 강아지 얼굴을 자연스럽게 붙여넣기
+        val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(result)
+        val clipPath = Path().apply {
+            addOval(
+                RectF(hLeft.toFloat(), hTop.toFloat(), hRight.toFloat(), hBottom.toFloat()),
+                Path.Direction.CW,
+            )
+        }
+        canvas.save()
+        canvas.clipPath(clipPath)
+        canvas.drawBitmap(scaledDog, hLeft.toFloat(), hTop.toFloat(), null)
+        canvas.restore()
+        scaledDog.recycle()
+
+        return result
     }
 
     private fun Float.fmt() = "%.3f".format(this)
