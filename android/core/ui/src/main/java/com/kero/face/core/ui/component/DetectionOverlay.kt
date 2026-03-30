@@ -42,12 +42,12 @@ fun DetectionOverlay(
                 && personFace != null && dogBoundingBox != null
 
         if (isSwapping) {
-            // 사람 얼굴 위치에 강아지 크롭을 그림
+            // 사람 얼굴 위치에 강아지 크롭을 그림 (정규화 좌표 [0,1] → 스크린 픽셀)
             val faceBox = personFace!!.boundingBox
-            val fLeft = if (isMirrored) size.width - faceBox.right * scaleX else faceBox.left * scaleX
-            val fRight = if (isMirrored) size.width - faceBox.left * scaleX else faceBox.right * scaleX
-            val fTop = faceBox.top * scaleY
-            val fBottom = faceBox.bottom * scaleY
+            val fLeft = if (isMirrored) size.width * (1f - faceBox.right) else faceBox.left * size.width
+            val fRight = if (isMirrored) size.width * (1f - faceBox.left) else faceBox.right * size.width
+            val fTop = faceBox.top * size.height
+            val fBottom = faceBox.bottom * size.height
 
             drawImage(
                 image = dogCrop!!.asImageBitmap(),
@@ -70,14 +70,15 @@ fun DetectionOverlay(
         } else {
             // 교환 불가 — 바운딩 박스만 표시
             if (personFace != null) {
+                // 정규화 좌표 [0,1] → 스크린 픽셀
                 val box = personFace.boundingBox
-                val left = if (isMirrored) size.width - box.right * scaleX else box.left * scaleX
-                val right = if (isMirrored) size.width - box.left * scaleX else box.right * scaleX
+                val left = if (isMirrored) size.width * (1f - box.right) else box.left * size.width
+                val right = if (isMirrored) size.width * (1f - box.left) else box.right * size.width
 
                 drawRect(
                     color = Color(0xFFFF6B9D),
-                    topLeft = Offset(left, box.top * scaleY),
-                    size = Size(right - left, (box.bottom - box.top) * scaleY),
+                    topLeft = Offset(left, box.top * size.height),
+                    size = Size(right - left, (box.bottom - box.top) * size.height),
                     style = dashedStroke,
                 )
             }
