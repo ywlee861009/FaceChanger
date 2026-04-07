@@ -61,15 +61,31 @@ internal object FaceSwapReducer {
     }
 
     private fun estimateDogFaceRect(bodyRect: RectF): RectF {
-        val bodyH = bodyRect.bottom - bodyRect.top
-        val bodyW = bodyRect.right - bodyRect.left
-        // 강아지 얼굴 ≈ 몸 바운딩박스의 상단 45%, 좌우 10% 안쪽
-        return RectF(
-            bodyRect.left + bodyW * 0.1f,
-            bodyRect.top,
-            bodyRect.right - bodyW * 0.1f,
-            bodyRect.top + bodyH * 0.45f,
-        )
+        val bboxW = bodyRect.width()
+        val bboxH = bodyRect.height()
+        val aspectRatio = bboxW / bboxH.coerceAtLeast(1f)
+        val cx = bodyRect.centerX()
+
+        return when {
+            aspectRatio > 1.4f -> {
+                // 누워있는 강아지: 머리가 좌우 한쪽 끝에 있음. 왼쪽 끝 우선
+                val faceW = bboxW * 0.35f
+                val faceH = bboxH * 0.90f
+                RectF(bodyRect.left, bodyRect.top, bodyRect.left + faceW, bodyRect.top + faceH)
+            }
+            aspectRatio > 0.7f -> {
+                // 정면/앉은 강아지
+                val faceW = bboxW * 0.72f
+                val faceH = bboxH * 0.58f
+                RectF(cx - faceW / 2f, bodyRect.top, cx + faceW / 2f, bodyRect.top + faceH)
+            }
+            else -> {
+                // 서있는 강아지: 머리가 전신의 상단 일부
+                val faceW = bboxW * 0.72f
+                val faceH = bboxH * 0.38f
+                RectF(cx - faceW / 2f, bodyRect.top, cx + faceW / 2f, bodyRect.top + faceH)
+            }
+        }
     }
 
     private fun cropPixel(bitmap: Bitmap, pixelRect: RectF): Bitmap? {
