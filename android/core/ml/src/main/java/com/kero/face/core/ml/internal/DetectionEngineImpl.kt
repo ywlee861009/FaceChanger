@@ -118,11 +118,11 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
     private fun detectDogInImage(mpImage: MPImage): BoundingBox? {
         val options = ObjectDetector.ObjectDetectorOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath("efficientdet_lite0.tflite").build()
+                BaseOptions.builder().setModelAssetPath("efficientdet_lite2.tflite").build()
             )
             .setRunningMode(RunningMode.IMAGE)
             .setMaxResults(10)
-            .setScoreThreshold(0.1f)
+            .setScoreThreshold(0.3f)
             .build()
         val detector = ObjectDetector.createFromOptions(context, options)
         return try {
@@ -155,9 +155,9 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
      * 강아지 전신 bbox에서 얼굴 영역을 추정합니다.
      *
      * 자세 추정:
-     * - aspectRatio > 1.3 (가로 긴 bbox): 누운 자세 → bbox 상단 50%, 가로 55%
-     * - aspectRatio 0.8~1.3 (정사각형): 카메라 정면 클로즈업 → 상단 70%, 가로 75%
-     * - aspectRatio < 0.8 (세로 긴 bbox): 서있음/앉음 → 상단 28%, 가로 60%
+     * - aspectRatio > 1.4 (가로 긴 bbox): 누운 자세 → 왼쪽 끝 35% 높이 90%
+     * - aspectRatio 0.7~1.4 (정사각형): 카메라 정면/앉음 → 상단 58%, 가로 72%
+     * - aspectRatio < 0.7 (세로 긴 bbox): 서있음 → 상단 38%, 가로 72%
      */
     private fun estimateDogFaceRect(bodyRect: RectF): RectF {
         val cx = bodyRect.centerX()
@@ -165,18 +165,26 @@ internal class DetectionEngineImpl(private val context: Context) : DetectionEngi
         val bboxH = bodyRect.height()
         val aspectRatio = bboxW / bboxH.coerceAtLeast(1f)
 
-        val (faceW, faceH) = when {
-            aspectRatio > 1.3f -> Pair(bboxW * 0.55f, bboxH * 0.50f)
-            aspectRatio > 0.8f -> Pair(bboxW * 0.75f, bboxH * 0.70f)
-            else -> Pair(bboxW * 0.60f, bboxH * 0.28f)
+        return when {
+            aspectRatio > 1.4f -> {
+                // 누워있는 강아지: 머리가 좌우 한쪽 끝에 있음. 왼쪽 끝 우선
+                val faceW = bboxW * 0.35f
+                val faceH = bboxH * 0.90f
+                RectF(bodyRect.left, bodyRect.top, bodyRect.left + faceW, bodyRect.top + faceH)
+            }
+            aspectRatio > 0.7f -> {
+                // 정면/앉은 강아지
+                val faceW = bboxW * 0.72f
+                val faceH = bboxH * 0.58f
+                RectF(cx - faceW / 2f, bodyRect.top, cx + faceW / 2f, bodyRect.top + faceH)
+            }
+            else -> {
+                // 서있는 강아지: 머리가 전신의 상단 일부
+                val faceW = bboxW * 0.72f
+                val faceH = bboxH * 0.38f
+                RectF(cx - faceW / 2f, bodyRect.top, cx + faceW / 2f, bodyRect.top + faceH)
+            }
         }
-
-        return RectF(
-            cx - faceW / 2f,
-            bodyRect.top,
-            cx + faceW / 2f,
-            bodyRect.top + faceH,
-        )
     }
 
     override fun close() {
